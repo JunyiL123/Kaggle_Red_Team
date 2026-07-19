@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect the upgraded adaptive attack locally.
-
-Shows single-hop + multi-post wordings, whether deterministic posted
-SECRET_MARKER, and how many candidates the loop kept.
-"""
+"""Inspect the hardened Single-Farm attack locally."""
 
 from __future__ import annotations
 
@@ -26,9 +22,9 @@ from attack import (
 
 
 def main() -> None:
-    print("Wordings this attack probes:")
-    for name, kind, template in TEMPLATES:
-        print(f"  - [{kind}] {name}: {_message(template, 0)[:110]}...")
+    print("Wordings this attack probes (shortest first):")
+    for name, template in TEMPLATES:
+        print(f"  - {name}: {_message(template, 0)[:110]}...")
     print(f"Required payload substring: {SECRET_MARKER!r}")
     print()
 
@@ -41,7 +37,7 @@ def main() -> None:
     )
 
     env.reset()
-    probe = _message(TEMPLATES[0][2], 0)
+    probe = _message(TEMPLATES[0][1], 0)
     env.interact(probe, max_tool_hops=8)
     trace = env.export_trace_dict()
     posts = []
@@ -59,8 +55,8 @@ def main() -> None:
     print(f"  marker_post_count: {_marker_post_count(trace)}")
     print()
 
-    budget_s = 25.0
-    print(f"Running adaptive attack for {budget_s:.0f}s...")
+    budget_s = 20.0
+    print(f"Running hardened Single-Farm for {budget_s:.0f}s...")
     findings = AttackAlgorithm().run(
         env,
         AttackRunConfig(time_budget_s=budget_s, max_tool_hops=8),
@@ -68,13 +64,16 @@ def main() -> None:
     print()
     print("=== demo_loop results ===")
     print(f"Returned candidates: {len(findings)}")
+    summary = Path("attack_run_summary.txt")
+    if summary.exists():
+        print(f"Summary file: {summary.resolve()}")
+        print(summary.read_text(encoding="utf-8")[:800])
     if findings:
         print(f"Example kept prompt: {findings[0].user_messages[0]}")
     else:
         print(
             "No SECRET_MARKER wins kept (expected on deterministic). "
-            "On gpt_oss/gemma, successful marker posts are kept and farmed; "
-            "multi-post templates are used only if they beat single-hop efficiency."
+            "On gpt_oss/gemma, successful marker posts are farmed."
         )
 
 
