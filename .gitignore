@@ -5,3 +5,5 @@ __pycache__/
 .DS_Store
 .pytest_cache/
 attack_run_summary.txt
+
+.ua/

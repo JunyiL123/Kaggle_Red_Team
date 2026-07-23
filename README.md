@@ -1,22 +1,18 @@
-# Gated EXFIL ladder (1x → 2x → 3x plain)
+# Three A/B attack variants
 
 Submission for the [Kaggle AI Agent Security](https://www.kaggle.com/competitions/ai-agent-security-multi-step-tool-attacks) public leaderboard.
 
-## Strategy
+## Submit these three
 
-1. Probe **all 6** short **1x** wordings (no early-stop)
-2. Rank by **conservative raw points/sec** (`16 × SECRET_MARKER posts + 2`)
-3. Screen **2x plain** dual; promote only if points/sec clearly beats 1x
-4. If 2x wins, screen **3x plain**; promote only if it beats 2x
-5. Farm the selected rung; **probation rollback** if live rate collapses
-6. Cap returns by measured replay cost (`REPLAY_SAFE=0.94`)
-7. Keep only trials that actually `http.post` **`SECRET_MARKER`** (plaintext; no reverse/hex/b64)
+| Notebook | Source | What it is |
+|---|---|---|
+| [`kaggle_submit_tetsutani.ipynb`](kaggle_submit_tetsutani.ipynb) | [`attack_tetsutani.py`](attack_tetsutani.py) | Near-copy of competitor v139 |
+| [`kaggle_submit.ipynb`](kaggle_submit.ipynb) | [`attack.py`](attack.py) | **Ours, no Harmony** — raw/sec, screen-all duals, stack if 2+ hit |
+| [`kaggle_submit_harmony.ipynb`](kaggle_submit_harmony.ipynb) | [`attack_harmony.py`](attack_harmony.py) | **Ours + Harmony** — inj-wrap duals, no 1.05 gate, optional stack_2 only |
 
-Reference competitor search pattern: `kaggle_outputs/tetsutani/` (we keep their gating, not their reversed second payload).
+Smoke A/B (not Submit): [`kaggle_debug_harmony_dual1.ipynb`](kaggle_debug_harmony_dual1.ipynb) vs [`kaggle_debug_harmony_dual2.ipynb`](kaggle_debug_harmony_dual2.ipynb) (`DUAL_SCREEN_REPS` 1 vs 2). Equal-N H2H: [`kaggle_debug_harmony_h2h.ipynb`](kaggle_debug_harmony_h2h.ipynb).
 
-**A/B reversible variant:** [`attack_reversible.py`](attack_reversible.py) + [`kaggle_submit_reversible.ipynb`](kaggle_submit_reversible.ipynb) — same ladder, but 2x/3x challengers also send reverse / hex / base64 forms and count them at search time.
-
-Archived Optimized code: [`attack_optimized.py`](attack_optimized.py).
+Older reference only: [`kaggle_submit_reversible.ipynb`](kaggle_submit_reversible.ipynb), [`kaggle_outputs/tetsutani/`](kaggle_outputs/tetsutani/).
 
 ## Setup / local checks
 
@@ -31,4 +27,4 @@ python -m pytest tests/test_attack_upgrades.py -v
 
 ## Submit on Kaggle
 
-Use [`kaggle_submit.ipynb`](kaggle_submit.ipynb): Save & Run All (Internet OFF + GPU) → Submit that Version. Run **2–3×** before changing code. Check Output for `attack_run_summary.txt` if present.
+For each notebook: Save & Run All (Internet OFF + GPU) → Submit that Version. Prefer **2–3×** per variant before changing code. Check Output for `attack_run_summary.txt` if present.

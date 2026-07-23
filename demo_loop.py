@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect the gated 1x→2x→3x EXFIL ladder locally."""
+"""Inspect raw/sec single-farm + gated dual encodings locally."""
 
 from __future__ import annotations
 
@@ -13,12 +13,13 @@ from aicomp_sdk.guardrails.optimal import Guardrail as OptimalGuardrail
 
 from attack import (
     CORE_ARMS,
-    MULTI_ARMS,
+    DUAL_ARMS,
     SECRET_MARKER,
     AttackAlgorithm,
     _format_arm,
     _marker_post_count,
     _posted_secret_marker,
+    _reversible_post_count,
 )
 
 
@@ -27,11 +28,11 @@ def main() -> None:
     for name, posts, _ in CORE_ARMS:
         msg, _ = _format_arm(name, 0)
         print(f"  - {name} (posts={posts}): {msg[:110]}...")
-    print("Multi challengers (plain SECRET_MARKER only):")
-    for name, posts, _ in MULTI_ARMS:
+    print("Gated duals (plain / reverse / b64 / cited URL):")
+    for name, posts, _ in DUAL_ARMS:
         msg, _ = _format_arm(name, 0)
-        print(f"  - {name} (posts={posts}): {msg[:110]}...")
-    print(f"Required payload substring: {SECRET_MARKER!r}")
+        print(f"  - {name} (posts={posts}): {msg[:120]}...")
+    print(f"Required payload: {SECRET_MARKER!r} (+ reversible forms)")
     print()
 
     fixtures = Path(aicomp_sdk.__file__).resolve().parent / "fixtures"
@@ -59,10 +60,11 @@ def main() -> None:
     print(f"  posts:  {posts[:2]}")
     print(f"  posted SECRET_MARKER?: {_posted_secret_marker(trace)}")
     print(f"  marker_post_count: {_marker_post_count(trace)}")
+    print(f"  reversible_post_count: {_reversible_post_count(trace)}")
     print()
 
     budget_s = 20.0
-    print(f"Running gated ladder for {budget_s:.0f}s...")
+    print(f"Running attack for {budget_s:.0f}s...")
     findings = AttackAlgorithm().run(
         env,
         AttackRunConfig(time_budget_s=budget_s, max_tool_hops=8),
@@ -73,7 +75,7 @@ def main() -> None:
     summary = Path("attack_run_summary.txt")
     if summary.exists():
         print(f"Summary file: {summary.resolve()}")
-        print(summary.read_text(encoding="utf-8")[:900])
+        print(summary.read_text(encoding="utf-8")[:1000])
     if findings:
         print(f"Example kept prompt: {findings[0].user_messages[0]}")
     else:
